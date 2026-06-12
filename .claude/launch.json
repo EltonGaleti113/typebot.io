@@ -30,6 +30,12 @@
       "runtimeExecutable": "bunx",
       "runtimeArgs": ["nx", "dev", "landing-page"],
       "port": 3003
+    },
+    {
+      "name": "clickin-web",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-lc", "cd /Users/macbookairm2/Workspace/ClickIn && pnpm --filter @clickin/web dev"],
+      "port": 3100
     }
   ]
 }
