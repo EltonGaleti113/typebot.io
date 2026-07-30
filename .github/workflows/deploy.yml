@@ -1,0 +1,64 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    name: Typecheck & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: "package.json"
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build content collections
+        run: bunx @content-collections/cli build --config content-collections.ts
+        working-directory: apps/landing-page
+
+      - name: Build @typebot.io/react
+        run: bunx nx build @typebot.io/react --configuration=production
+
+      - name: Typecheck (affected)
+        run: bunx nx affected -t typecheck --base=${{ github.event.before || 'HEAD~1' }}
+
+      - name: Test (affected)
+        run: bunx nx affected -t test --base=${{ github.event.before || 'HEAD~1' }}
+
+  # Dispara o deploy de verdade no repo irmão ClickIn: é a stack dele
+  # (docker-compose.prod.yml, serviços typebot-builder/typebot-viewer com
+  # `context: ../typebot.io`) que roda o Typebot em produção — ver
+  # ClickIn/.github/workflows/ci.yml (job "deploy", trigger repository_dispatch
+  # "typebot-deploy") e a seção "Deploy do Typebot" em ClickIn/CLAUDE.md.
+  dispatch-deploy:
+    name: Disparar deploy no ClickIn
+    needs: verify
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Repository dispatch → EltonGaleti113/ClickIn
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.CLICKIN_DISPATCH_TOKEN }}
+          repository: EltonGaleti113/ClickIn
+          event-type: typebot-deploy
+          client-payload: |-
+            {"typebot_sha": "${{ github.sha }}", "triggered_by": "${{ github.actor }}"}
