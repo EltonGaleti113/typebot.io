@@ -30,6 +30,7 @@ export const parseTestTypebot = (
   resultsTablePreferences: null,
   whatsAppCredentialsId: null,
   riskLevel: null,
+  clickInChannelId: null,
   events: [
     {
       id: "event1",

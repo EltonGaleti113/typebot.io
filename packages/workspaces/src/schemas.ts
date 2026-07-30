@@ -55,6 +55,7 @@ export const workspaceSchema = z.object({
   lastActivityAt: z.date().nullable(),
   inactiveFirstEmailSentAt: z.date().nullable(),
   inactiveSecondEmailSentAt: z.date().nullable(),
+  clickInApiKey: z.string().nullable(),
 }) satisfies z.ZodType<Prisma.Workspace>;
 
 export type Workspace = z.infer<typeof workspaceSchema>;

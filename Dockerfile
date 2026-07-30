@@ -24,6 +24,8 @@ WORKDIR /app
 
 FROM base AS builder
 ARG SCOPE
+ENV NX_DAEMON=false \
+    NX_VERBOSE_LOGGING=false
 COPY . .
 RUN SENTRYCLI_SKIP_DOWNLOAD=1 bun install --frozen-lockfile
 RUN SKIP_ENV_CHECK=true DATABASE_URL=postgresql:// NEXT_PUBLIC_VIEWER_URL=http://localhost bunx nx build ${SCOPE}

@@ -122,6 +122,10 @@ const baseEnv = {
       guessLandingUrlForVercelPreview,
       z.string().url().optional(),
     ),
+    CLICKIN_API_URL: z.string().url().optional(),
+    // Segredo enviado como X-Typebot-Webhook-Secret ao notificar o ClickIn no
+    // primeiro login SSO de um workspace (ver packages/auth/src/helpers/provisionClickInWorkspace.ts)
+    CLICKIN_WEBHOOK_SECRET: z.string().min(1).optional(),
   },
   client: {
     NEXT_PUBLIC_VIEWER_URL: z.preprocess(

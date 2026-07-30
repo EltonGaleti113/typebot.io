@@ -24,6 +24,7 @@ import { Effect, Layer } from "effect";
 import { convertInvitationsToCollaborations } from "./convertInvitationsToCollaborations";
 import { getNewUserInvitations } from "./getNewUserInvitations";
 import { joinWorkspaces } from "./joinWorkspaces";
+import { provisionClickInWorkspace } from "./provisionClickInWorkspace";
 
 const MainLayer = Layer.provideMerge(
   Layer.provide(UsersWorkflowsRpcClient.layer, WorkflowsRpcClientConfig.layer),
@@ -73,6 +74,17 @@ export const createAuthPrismaAdapter = (p: Prisma.PrismaClient): Adapter => ({
       },
     });
     const newWorkspaceId = createdUser.workspaces.pop()?.workspaceId;
+    if (newWorkspaceId && createdUser.email) {
+      try {
+        await provisionClickInWorkspace(p, {
+          email: createdUser.email,
+          userId: createdUser.id,
+          workspaceId: newWorkspaceId,
+        });
+      } catch (e) {
+        console.error("Failed to provision ClickIn workspace", e);
+      }
+    }
     const events: TelemetryEvent[] = [];
     if (newWorkspaceId) {
       events.push({

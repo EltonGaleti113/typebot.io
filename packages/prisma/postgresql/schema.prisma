@@ -113,6 +113,7 @@ model Workspace {
   inactiveFirstEmailSentAt      DateTime?
   inactiveSecondEmailSentAt     DateTime?
   spaces                        Space[]
+  clickInApiKey                 String?
 }
 
 model Space {
@@ -235,6 +236,7 @@ model Typebot {
   bannedIps               BannedIp[]
   space                   Space?                    @relation(fields: [spaceId], references: [id], onDelete: SetNull)
   spaceId                 String?
+  clickInChannelId        String?
 
   @@index([workspaceId])
   @@index([isArchived, createdAt(sort: Desc)])

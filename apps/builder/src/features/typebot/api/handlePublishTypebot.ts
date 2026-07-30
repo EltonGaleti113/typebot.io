@@ -24,6 +24,7 @@ import { variableSchema } from "@typebot.io/variables/schemas";
 import { z } from "zod";
 import { parseTypebotPublishEvents } from "@/features/telemetry/helpers/parseTypebotPublishEvents";
 import { isWriteTypebotForbidden } from "../helpers/isWriteTypebotForbidden";
+import { type ClickInSyncResult, syncClickInOnPublish } from "./clickInSync";
 
 const warningSchema = z.object({
   type: z.enum(["trademarkInfringement"]),
@@ -63,6 +64,7 @@ export const handlePublishTypebot = async ({
           isVerified: true,
           isSuspended: true,
           isPastDue: true,
+          clickInApiKey: true,
           members: {
             select: {
               userId: true,
@@ -222,8 +224,16 @@ export const handlePublishTypebot = async ({
 
   await trackEvents(publishEvents);
 
+  const clickIn = await syncClickInOnPublish({
+    typebotId: existingTypebot.id,
+    typebotPublicId: existingTypebot.publicId ?? "",
+    existingClickInChannelId: existingTypebot.clickInChannelId ?? null,
+    workspaceClickInApiKey: existingTypebot.workspace.clickInApiKey ?? null,
+  }).catch(() => ({ status: "skipped" }) satisfies ClickInSyncResult);
+
   return {
     message: "success" as const,
     warnings: warnings.length > 0 ? warnings : undefined,
+    clickIn,
   };
 };

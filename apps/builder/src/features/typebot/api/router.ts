@@ -39,6 +39,10 @@ import {
   isPublicIdAvailableInputSchema,
 } from "./handleIsPublicIdAvailable";
 import {
+  handleLinkTypebotToClickInChannel,
+  linkTypebotToClickInChannelInputSchema,
+} from "./handleLinkTypebotToClickInChannel";
+import {
   handleListTypebots,
   listTypebotsInputSchema,
 } from "./handleListTypebots";
@@ -135,6 +139,19 @@ const listTypebots = authenticatedProcedure
   )
   .handler(handleListTypebots);
 
+const clickInChannelSchema = z.object({ id: z.string(), name: z.string() });
+
+const clickInSyncResultSchema = z.discriminatedUnion("status", [
+  z.object({ status: z.literal("skipped") }),
+  z.object({ status: z.literal("already_linked") }),
+  z.object({ status: z.literal("linked"), channelId: z.string() }),
+  z.object({ status: z.literal("no_channels") }),
+  z.object({
+    status: z.literal("multiple_channels"),
+    channels: z.array(clickInChannelSchema),
+  }),
+]);
+
 const publishTypebot = authenticatedProcedure
   .route({
     method: "POST",
@@ -147,9 +164,21 @@ const publishTypebot = authenticatedProcedure
     z.object({
       message: z.literal("success"),
       warnings: z.array(warningSchema).optional(),
+      clickIn: clickInSyncResultSchema.optional(),
     }),
   )
   .handler(handlePublishTypebot);
+
+const linkTypebotToClickInChannel = authenticatedProcedure
+  .route({
+    method: "POST",
+    path: "/v1/typebots/{typebotId}/linkClickInChannel",
+    summary: "Link a typebot to one or all ClickIn channels",
+    tags: ["Typebot"],
+  })
+  .input(linkTypebotToClickInChannelInputSchema)
+  .output(z.object({ message: z.literal("success") }))
+  .handler(handleLinkTypebotToClickInChannel);
 
 const unpublishTypebot = authenticatedProcedure
   .route({
@@ -217,6 +246,7 @@ export type TypebotRouter = {
   importTypebot: typeof importTypebot;
   getTypebotBlocks: typeof getTypebotBlocks;
   isPublicIdAvailable: typeof isPublicIdAvailable;
+  linkTypebotToClickInChannel: typeof linkTypebotToClickInChannel;
 };
 
 export const typebotRouter: TypebotRouter = {
@@ -231,4 +261,5 @@ export const typebotRouter: TypebotRouter = {
   importTypebot,
   getTypebotBlocks,
   isPublicIdAvailable,
+  linkTypebotToClickInChannel,
 };

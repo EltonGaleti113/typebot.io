@@ -3,8 +3,6 @@ x-typebot-common: &typebot-common
   depends_on:
     typebot-redis:
       condition: service_healthy
-    typebot-db:
-      condition: service_healthy
   networks:
     - typebot-network
   env_file: .env
@@ -12,22 +10,6 @@ x-typebot-common: &typebot-common
     REDIS_URL: redis://typebot-redis:6379
 
 services:
-  typebot-db:
-    image: postgres:16
-    restart: always
-    volumes:
-      - db-data:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_DB=typebot
-      - POSTGRES_PASSWORD=typebot
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    networks:
-      - typebot-network
-
   typebot-redis:
     image: redis:alpine
     restart: always
@@ -45,13 +27,21 @@ services:
 
   typebot-builder:
     <<: *typebot-common
-    image: baptistearno/typebot-builder:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SCOPE: builder
     ports:
       - "8080:3000"
 
   typebot-viewer:
     <<: *typebot-common
-    image: baptistearno/typebot-viewer:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SCOPE: viewer
     ports:
       - "8081:3000"
 
@@ -60,5 +50,4 @@ networks:
     driver: bridge
 
 volumes:
-  db-data:
   redis-data:

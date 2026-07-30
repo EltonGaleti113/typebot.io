@@ -31,5 +31,6 @@ export const convertPublicTypebotToTypebot = (
     riskLevel: existingTypebot.riskLevel,
     events: typebot.events,
     spaceId: existingTypebot.spaceId,
+    clickInChannelId: existingTypebot.clickInChannelId,
   };
 };
