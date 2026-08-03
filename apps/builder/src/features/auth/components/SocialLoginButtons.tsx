@@ -5,7 +5,7 @@ import { GithubIcon } from "@typebot.io/ui/icons/GithubIcon";
 import { useRouter } from "next/router";
 import { type getProviders, signIn, useSession } from "next-auth/react";
 import { stringify } from "qs";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { GoogleLogo } from "@/components/GoogleLogo";
 import { AzureAdLogo } from "@/components/logos/AzureAdLogo";
 import { FacebookLogo } from "@/components/logos/FacebookLogo";
@@ -45,6 +45,19 @@ export const SocialLoginButtons = ({ providers }: Props) => {
   const handleCustomOAuthClick = () => handleSignIn("custom-oauth");
 
   const handleKeyCloackClick = () => handleSignIn("keycloak");
+
+  // ClickIn (e qualquer link externo pro "Custom OAuth") só pode chegar aqui via navegação de
+  // browser (GET), nunca via `signIn()` client-side — um `?autoProvider=` na URL dispara o
+  // mesmo fluxo automaticamente, sem exigir um clique manual extra nesta tela.
+  const autoTriggeredRef = useRef(false);
+  useEffect(() => {
+    if (autoTriggeredRef.current) return;
+    const autoProvider = query.autoProvider?.toString();
+    if (!autoProvider || !providers?.[autoProvider]) return;
+    autoTriggeredRef.current = true;
+    handleSignIn(autoProvider);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [providers, query.autoProvider]);
 
   return (
     <div className="flex flex-col gap-2">
